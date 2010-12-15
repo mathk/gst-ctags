@@ -110,10 +110,28 @@ smalltalkUnaryMethod (const char *const line, const regexMatch *const matches,
 	}
 }
 
-static vString 
-nextToken(vString line)
+static vString *const 
+nextToken(const char ** pcurrentChar)
 {
-  
+  vString *const token = vStringNew ();
+  int next = (int)*pcurrentChar[0];
+  *pcurrentChar = *pcurrentChar + 1;
+  while (next == ' ' || next == '\t')
+	{
+	  next = (int)*pcurrentChar[0];
+	  *pcurrentChar = *pcurrentChar + 1;
+	}
+
+  if (next == '\0')
+	return token;
+
+  while (next != ' ' && next != '\t' && next != '\0')
+	{
+	  vStringPut(token, next);
+	  next = (int)*pcurrentChar[0];
+	  *pcurrentChar = *pcurrentChar + 1;
+	}
+  return token;
 }
 
 
@@ -121,24 +139,17 @@ static void
 smalltalkKeywordMethod (const char *const line, const regexMatch * const matches,
 				const unsigned int count)
 {
-  bool copy = true;
-  if (count > 2) /* should always be true per regex */
+  const char* currentChar = line;
+  if (count > 1) /* should always be true per regex */
 	{
-	  vString *const matchString = vStringNew ();
 	  vString *const name = vStringNew ();
-	  vStringNCopyS (matchString, line + matches [0].start, matches [0].length);
-	  vStringStripLeading (matchString);
-	  vStringStripTrailing (matchString);
-	  for(int i = 0; i < matchString.length; i++)
+	  vString * token = nextToken (&currentChar);
+	  while (vStringLength (token) != 0)
 		{
-		  if (copy)
-			{
-			  vStringPut (name, vStringChar (matchString, i));
-			}
-		  if (vStringItem (matchString, i) == ':')
-			{
-			  
-			}
+		  if (vStringLast (token) == ':')
+			vStringCatS(name, vStringValue(token));
+
+		  token = nextToken (&currentChar);
 		}
 	  makeSimpleTag (name, SmalltalkKinds, K_METHOD);
 	}
