@@ -88,12 +88,12 @@ installSmalltalk (const langType language)
 {
   addCallbackRegex (language, "^" SPACE_PATTERN CLASS_PATTERN SPACE_PATTERN "subclass:" SPACE_PATTERN "(" CLASS_PATTERN ")[[ \t]", NULL, smalltalkClass);
   addCallbackRegex (language, "^" SPACE_PATTERN "(" CLASS_PATTERN ")[ \t]extend[ \t]+\\[", NULL, smalltalkClass);
-  addCallbackRegex (language, "^[ \t]*(" UNARY_PATTERN ")" SPACE_PATTERN "\\[", NULL, smalltalkUnaryMethod);
-  addCallbackRegex (language, "^[ \t]*" CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
+  addCallbackRegex (language, "^" SPACE_PATTERN "(" UNARY_PATTERN ")" SPACE_PATTERN "\\[", NULL, smalltalkUnaryMethod);
+  addCallbackRegex (language, "^" SPACE_PATTERN CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
 					          SPACE_PATTERN "(" UNARY_PATTERN  ")" SPACE_PATTERN "\\[", NULL, smalltalkUnaryMethod);
-  addCallbackRegex (language, "^[ \t]*" CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
-					          SPACE_PATTERN "(" KEYWORD_PATTERN  ")" SPACE_PATTERN "\\[", NULL, smalltalkKeywordMethod);
-  addCallbackRegex (language, "^[ \t]*" KEYWORD_PATTERN "\\[", NULL, smalltalkKeywordMethod);
+  addCallbackRegex (language, "^" SPACE_PATTERN CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
+					          SPACE_PATTERN "(" KEYWORD_PATTERN  ")\\[", NULL, smalltalkKeywordMethod);
+  addCallbackRegex (language, "^" SPACE_PATTERN KEYWORD_PATTERN "\\[", NULL, smalltalkKeywordMethod);
 }
 
 static void
