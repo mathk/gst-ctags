@@ -17,7 +17,6 @@ config.h
 config.log
 config.status
 configure
-INSTALL
 libtool
 Makefile.in
 Makefile

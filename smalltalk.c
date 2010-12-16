@@ -18,6 +18,11 @@
 #include "parse.h"      /* always include */
 #include "read.h"       /* to define file fileReadLine() */
 
+#define CLASS_PATTERN   "[A-Z][A-Za-z0-9_]*"
+#define SPACE_PATTERN   "[ \t]*"
+#define UNARY_PATTERN   "[A-Za-z_][A-Za-z0-9_]*"
+#define KEYWORD_PATTERN "([A-Za-z_][A-Za-z0-9_]*:[ \t]?[A-Za-z_][A-Za-z0-9_]*[ \t]?)+"
+
 /*
   Main function that walk throw the file
  */
@@ -81,9 +86,14 @@ SmalltalkParser (void)
 static void
 installSmalltalk (const langType language)
 {
-  addCallbackRegex (language, "^[ \t]*[A-Z][A-Za-z0-9_]+[ \t]subclass:[ \t]([A-Z][A-Za-z0-9_]+)[[ \t]", NULL, smalltalkClass);
-  addCallbackRegex (language, "^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*[[]", NULL, smalltalkUnaryMethod);
-  addCallbackRegex (language, "^[ \t]*([A-Za-z_][A-Za-z0-9_]*:[ \t]?[A-Za-z_][A-Za-z0-9_]*[ \t]?)+[[]", NULL, smalltalkKeywordMethod);
+  addCallbackRegex (language, "^" SPACE_PATTERN CLASS_PATTERN SPACE_PATTERN "subclass:" SPACE_PATTERN "(" CLASS_PATTERN ")[[ \t]", NULL, smalltalkClass);
+  addCallbackRegex (language, "^" SPACE_PATTERN "(" CLASS_PATTERN ")[ \t]extend[ \t]+\\[", NULL, smalltalkClass);
+  addCallbackRegex (language, "^[ \t]*(" UNARY_PATTERN ")" SPACE_PATTERN "\\[", NULL, smalltalkUnaryMethod);
+  addCallbackRegex (language, "^[ \t]*" CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
+					          SPACE_PATTERN "(" UNARY_PATTERN  ")" SPACE_PATTERN "\\[", NULL, smalltalkUnaryMethod);
+  addCallbackRegex (language, "^[ \t]*" CLASS_PATTERN SPACE_PATTERN "class" SPACE_PATTERN ">>" 
+					          SPACE_PATTERN "(" KEYWORD_PATTERN  ")" SPACE_PATTERN "\\[", NULL, smalltalkKeywordMethod);
+  addCallbackRegex (language, "^[ \t]*" KEYWORD_PATTERN "\\[", NULL, smalltalkKeywordMethod);
 }
 
 static void
@@ -102,7 +112,7 @@ static void
 smalltalkUnaryMethod (const char *const line, const regexMatch *const matches,
 				const unsigned int count)
 {
-  if (count > 1) /* should always be true per regex */
+  if (count > 1)
 	{
 	  vString *const name = vStringNew ();
 	  vStringNCopyS (name, line + matches [1].start, matches [1].length);
@@ -111,24 +121,24 @@ smalltalkUnaryMethod (const char *const line, const regexMatch *const matches,
 }
 
 static vString *const 
-nextToken(const char ** pcurrentChar)
+nextToken(const char ** pcurrentChar, const char * endChar)
 {
   vString *const token = vStringNew ();
-  int next = (int)*pcurrentChar[0];
+  int next = (int)*pcurrentChar [0];
   *pcurrentChar = *pcurrentChar + 1;
   while (next == ' ' || next == '\t')
 	{
-	  next = (int)*pcurrentChar[0];
+	  next = (int)*pcurrentChar [0];
 	  *pcurrentChar = *pcurrentChar + 1;
 	}
 
-  if (next == '\0')
+  if (*pcurrentChar >= endChar)
 	return token;
 
-  while (next != ' ' && next != '\t' && next != '\0')
+  while (next != ' ' && next != '\t' && *pcurrentChar < endChar)
 	{
 	  vStringPut(token, next);
-	  next = (int)*pcurrentChar[0];
+	  next = (int)*pcurrentChar [0];
 	  *pcurrentChar = *pcurrentChar + 1;
 	}
   return token;
@@ -140,16 +150,18 @@ smalltalkKeywordMethod (const char *const line, const regexMatch * const matches
 				const unsigned int count)
 {
   const char* currentChar = line;
+  const char* endChar;
   if (count > 1) /* should always be true per regex */
 	{
+	  endChar = line + matches [1].start + matches [1].length - 1;
 	  vString *const name = vStringNew ();
-	  vString * token = nextToken (&currentChar);
+	  vString * token = nextToken (&currentChar, endChar);
 	  while (vStringLength (token) != 0)
 		{
 		  if (vStringLast (token) == ':')
-			vStringCatS(name, vStringValue(token));
+			vStringCatS(name, vStringValue (token));
 
-		  token = nextToken (&currentChar);
+		  token = nextToken (&currentChar, endChar);
 		}
 	  makeSimpleTag (name, SmalltalkKinds, K_METHOD);
 	}
