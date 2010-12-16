@@ -4,7 +4,7 @@
 *   This source code is released for free distribution under the terms of the
 *   GNU General Public License.
 *
-*   This module contains functions for generating tags for Objective Caml
+*   This module contains functions for generating tags for Smalltalk
 *   language files.
 */
 /*
